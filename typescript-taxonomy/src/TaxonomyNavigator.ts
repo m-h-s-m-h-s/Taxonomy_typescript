@@ -987,7 +987,7 @@ The number must be between 1 and ${leaves.length}.`;
   // private async checkRateLimit(): Promise<void> {
   //   const now = Date.now();
   //   const timeSinceLastRequest = now - this.lastRequestTime;
-  //   const minTimeBetweenRequests = 1000 / (this.config.rateLimit.requestsPerSecond || 1);
+  //   const minTimeBetweenRequests = 500 / (this.config.rateLimit.requestsPerSecond || 1);
   //   
   //   if (timeSinceLastRequest < minTimeBetweenRequests) {
   //     const waitTime = minTimeBetweenRequests - timeSinceLastRequest;
