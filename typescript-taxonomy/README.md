@@ -234,7 +234,7 @@ const navigator = new TaxonomyNavigator({
   model: 'gpt-3.5-turbo',
   
   // Better model for final decision only
-  stage3Model: 'gpt-4',
+  stage3Model: 'gpt-4.1-mini',
   
   // Disable logging for production
   enableLogging: false,
