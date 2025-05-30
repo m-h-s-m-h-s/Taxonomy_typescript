@@ -13,7 +13,8 @@
  * SECURITY CONSIDERATIONS:
  * - Never commit api_key.txt to version control (.gitignore it)
  * - Use environment variables in production
- * - Direct parameter useful for testing with temporary keys
+ * - Direct parameter useful (OpenAI API key)
+ * or testing with temporary keys
  * 
  * FILE PATH RESOLUTION:
  * - Looks for api_key.txt in multiple locations

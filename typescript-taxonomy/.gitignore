@@ -1,0 +1,36 @@
+# API Keys - NEVER commit these!
+data/api_key.txt
+api_key.txt
+*.key
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Dependencies
+node_modules/
+.npm
+
+# Build outputs
+dist/
+build/
+*.log
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# TypeScript
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/
+*.tmp 
