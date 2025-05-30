@@ -1,33 +1,28 @@
 /**
- * Taxonomy Navigator Interactive Interface
+ * Interactive command-line interface for the Taxonomy Navigator.
  * 
- * This module provides an interactive command-line interface for the Taxonomy Navigator
- * system. It allows users to test product classifications in real-time without needing
- * to use command-line arguments for each query.
+ * This module provides a user-friendly way to test the classification
+ * system interactively, allowing real-time product categorization with
+ * detailed feedback about the process.
  * 
- * Features:
- * - Interactive product entry with prompts
- * - Real-time classification results using 5-stage AI process
- * - Option to save results to file
- * - Continuous operation until user exits
- * - Verbose logging option for debugging
- * - Support for both simple and detailed output formats
+ * FEATURES:
+ * - Interactive product input
+ * - Detailed stage-by-stage results
+ * - Performance metrics (time, API calls)
+ * - Graceful exit handling
+ * - Error display with suggestions
  * 
- * This interface is ideal for:
- * - Testing the classification system with various products
- * - Demonstrating the system capabilities
- * - Development and debugging
- * - Quick ad-hoc classifications
+ * USE CASES:
+ * - Testing and debugging the classification system
+ * - Demonstrating capabilities to stakeholders
+ * - Quick ad-hoc product categorization
+ * - Understanding the multi-stage process
  * 
- * The system uses a sophisticated five-stage approach:
- * 1. AI Summarization: Generate focused 40-60 word summary
- * 2. Stage 1: Select 2 most relevant top-level categories
- * 3. Stage 2A/2B: Select specific categories with batch processing
- * 4. Stage 3: Final selection using enhanced model
- * 
- * Author: AI Assistant
- * Version: 1.0 (TypeScript port)
- * Last Updated: 2025-01-29
+ * DESIGN DECISIONS:
+ * - Uses readline for cross-platform compatibility
+ * - Shows intermediate results for transparency
+ * - Formats output with emojis for clarity
+ * - Handles Ctrl+C gracefully
  */
 
 import * as readline from 'readline';

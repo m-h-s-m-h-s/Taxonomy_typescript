@@ -1,12 +1,24 @@
 /**
- * Configuration Management for Taxonomy Navigator
+ * Configuration utilities for the Taxonomy Navigator.
  * 
- * This module provides configuration functions for the Taxonomy Navigator system.
- * Currently includes API key management with multiple fallback options.
+ * This module handles API key management with multiple fallback sources,
+ * ensuring flexibility for different deployment environments while maintaining
+ * security best practices.
  * 
- * Author: AI Assistant
- * Version: 2.0 (TypeScript port)
- * Last Updated: 2025-01-29
+ * API KEY SOURCES (in order of precedence):
+ * 1. Direct parameter (for programmatic use)
+ * 2. OPENAI_API_KEY environment variable (for cloud deployments)
+ * 3. api_key.txt file (for local development)
+ * 
+ * SECURITY CONSIDERATIONS:
+ * - Never commit api_key.txt to version control (.gitignore it)
+ * - Use environment variables in production
+ * - Direct parameter useful for testing with temporary keys
+ * 
+ * FILE PATH RESOLUTION:
+ * - Looks for api_key.txt in multiple locations
+ * - Handles both development and npm package scenarios
+ * - Gracefully handles missing files
  */
 
 import * as fs from 'fs';
@@ -22,47 +34,55 @@ const logger = {
 };
 
 /**
- * Retrieve OpenAI API key from multiple sources with fallback hierarchy.
+ * Retrieves the OpenAI API key from multiple sources.
  * 
- * This function implements a secure and flexible approach to API key management
- * by checking multiple sources in order of precedence. This allows users to
- * provide the API key in the most convenient way for their setup.
+ * This function implements a flexible fallback system for API key retrieval,
+ * accommodating different deployment scenarios while maintaining security.
  * 
- * The search order is designed for security and convenience:
- * 1. Direct argument (highest precedence) - for programmatic use
- * 2. Environment variable - for secure server deployments
- * 3. Local file - for development convenience
+ * LOOKUP STRATEGY:
+ * 1. If provided directly, validate and return it
+ * 2. Check OPENAI_API_KEY environment variable
+ * 3. Search for api_key.txt in multiple locations:
+ *    - Current working directory + /data/
+ *    - Current working directory + /typescript-taxonomy/data/
+ *    - Script directory + /data/
+ *    - Parent of script directory + /data/
  * 
- * @param apiKeyArg - API key provided directly as a function argument.
- *                    This takes highest precedence if provided.
- * @returns The OpenAI API key if found, null if no key is available from any source.
+ * FILE SEARCH RATIONALE:
+ * - Multiple paths handle different execution contexts
+ * - Works when run from project root or subdirectories
+ * - Works when installed as npm package
+ * - Handles TypeScript vs compiled JavaScript locations
+ * 
+ * ERROR HANDLING:
+ * - Returns null if no key found (caller must handle)
+ * - File read errors are caught and ignored (security)
+ * - Empty strings treated as missing
+ * 
+ * @param providedKey - Optional API key provided directly
+ * @returns The API key if found, null otherwise
  * 
  * @example
  * ```typescript
- * // Try to get API key with fallback
- * const apiKey = getApiKey();
- * if (!apiKey) {
- *   throw new Error("No API key found");
- * }
+ * // Direct usage
+ * const key = getApiKey('sk-...');
  * 
- * // Or provide directly
- * const apiKey = getApiKey("sk-...");
+ * // With environment variable
+ * process.env.OPENAI_API_KEY = 'sk-...';
+ * const key = getApiKey();
+ * 
+ * // With api_key.txt file
+ * const key = getApiKey(); // reads from file
  * ```
- * 
- * Security Notes:
- * - Environment variables are preferred for production deployments
- * - Local files should only be used in development environments
- * - Never commit API keys to version control
- * - The api_key.txt file is in .gitignore to prevent accidental commits
  */
-export function getApiKey(apiKeyArg?: string): string | null {
+export function getApiKey(providedKey?: string): string | null {
   logger.debug("Attempting to retrieve OpenAI API key from available sources");
   
   // Priority 1: Direct argument (highest precedence)
   // This allows programmatic override and is useful for testing
-  if (apiKeyArg) {
+  if (providedKey) {
     logger.debug("API key provided as direct argument");
-    return apiKeyArg;
+    return providedKey;
   }
   
   // Priority 2: Environment variable

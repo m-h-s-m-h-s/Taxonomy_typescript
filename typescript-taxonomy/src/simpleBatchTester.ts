@@ -1,39 +1,33 @@
 /**
- * Simple Taxonomy Test - Streamlined Product Classification Display
+ * Simple batch testing utility for the Taxonomy Navigator.
  * 
- * This module provides a simplified testing interface for the Taxonomy Navigator that
- * focuses on clean, readable output. It displays only the essential information:
- * product titles and their final taxonomy leaf categories.
+ * This module provides a straightforward way to test multiple products
+ * at once, displaying detailed stage-by-stage results for each product
+ * to understand how the classification system works.
  * 
- * Purpose:
- * - Quick validation of classification results with stage-by-stage AI selections
- * - Clean output for demonstrations and presentations
- * - Simplified testing without verbose logging or detailed metrics
- * - Easy-to-read format for manual review of classifications
- * - Validation statistics showing AI accuracy (valid vs invalid selections)
+ * PURPOSE:
+ * - Demonstrate the multi-stage classification process
+ * - Test multiple products in sequence
+ * - Show intermediate results for debugging
+ * - Validate classification accuracy
  * 
- * Key Features:
- * - Minimal output format: "[Product Description]" followed by "Final Category"
- * - Automatic title extraction from product descriptions
- * - Batch processing with clean console output
- * - Stage-by-stage display of AI selections at each classification stage
- * - Shows AI-generated product summary used for all stages
- * - Validation statistics showing how many AI selections actually exist in taxonomy
- * - Random product selection for varied testing
- * - Prominent visual separation between products for easy reading
- * - Ideal for quick spot-checks and demonstrations
+ * OUTPUT FORMAT:
+ * - Shows each stage's results with emojis
+ * - Displays processing time and API calls
+ * - Formats results in an easy-to-read layout
+ * - Includes summary statistics at the end
  * 
- * Use Cases:
- * - Quick testing of product classification accuracy
- * - Generating clean output for reports or presentations
- * - Validating specific product sets without detailed metrics
- * - Demonstrating system capabilities with minimal noise
- * - Manual review of classification results
- * - Debugging AI selection quality and taxonomy coverage
+ * USE CASES:
+ * - Initial system testing after setup
+ * - Regression testing after changes
+ * - Demonstrating capabilities with examples
+ * - Understanding classification decisions
  * 
- * Author: AI Assistant
- * Version: 1.0 (TypeScript port)
- * Last Updated: 2025-01-29
+ * DESIGN PHILOSOPHY:
+ * - Hardcoded test products for consistency
+ * - Verbose output for educational purposes
+ * - Sequential processing for clarity
+ * - Error handling with continuation
  */
 
 import * as fs from 'fs';
@@ -41,6 +35,258 @@ import * as path from 'path';
 import * as readline from 'readline';
 import { TaxonomyNavigator } from './TaxonomyNavigator';
 import { getApiKey } from './config';
+
+/**
+ * Array of test products covering different categories.
+ * 
+ * These products are carefully chosen to test various aspects:
+ * - Electronics (TV, laptop, camera)
+ * - Fashion (shoes, lipstick)
+ * - Home goods (coffee maker)
+ * - Cross-category items
+ * - Products with potential ambiguity
+ * 
+ * Each product string simulates real e-commerce descriptions
+ * with brand names, specifications, and features.
+ */
+const testProducts = [
+  "Samsung 65-inch QLED 4K Smart TV with Alexa Built-in",
+  "Nike Air Max 270 React Men's Running Shoes",
+  "MAC Cosmetics Ruby Woo Matte Lipstick",
+  "Nespresso Vertuo Next Coffee and Espresso Machine",
+  "Apple MacBook Pro 16-inch M3 Max Space Black",
+  "Canon EOS R5 Mirrorless Camera Body Only"
+];
+
+/**
+ * Formats a number as seconds with one decimal place.
+ * 
+ * @param ms - Time in milliseconds
+ * @returns Formatted string like "2.3s"
+ */
+function formatTime(ms: number): string {
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
+/**
+ * Main function that runs the batch test.
+ * 
+ * PROCESS FLOW:
+ * 1. Initialize TaxonomyNavigator
+ * 2. Process each test product sequentially
+ * 3. Display stage-by-stage results
+ * 4. Show summary statistics
+ * 
+ * STAGE DISPLAY:
+ * - Stage 0: AI-generated summary
+ * - Stage 1: Selected L1 categories
+ * - Stage 2A/2B: Leaf selections with batch info
+ * - Stage 3: Final result
+ * 
+ * ERROR HANDLING:
+ * - Continues processing remaining products on error
+ * - Shows error details for debugging
+ * - Includes failed products in summary
+ * 
+ * @example
+ * ```bash
+ * npm run test-simple
+ * 
+ * 🧪 SIMPLE BATCH TESTER
+ * Testing 6 products...
+ * 
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * 📦 PRODUCT 1 of 6
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * Input: Samsung 65-inch QLED 4K Smart TV...
+ * 
+ * 📝 STAGE 0: AI Summary
+ * "Television (TV, flat-screen display)..."
+ * 
+ * 🎯 STAGE 1: Top Categories Selected
+ * • Electronics
+ * • Home & Garden
+ * ...
+ * ```
+ */
+async function runBatchTest() {
+  // Parse command line arguments
+  const args = process.argv.slice(2);
+  
+  // Simple argument parsing
+  const getArg = (flag: string, defaultValue?: string): string | undefined => {
+    const index = args.indexOf(flag);
+    if (index !== -1 && index + 1 < args.length) {
+      return args[index + 1];
+    }
+    return defaultValue;
+  };
+
+  const hasFlag = (flag: string): boolean => args.includes(flag);
+
+  // File configuration
+  const defaultTaxonomy = path.join(__dirname, '..', '..', 'data', 'taxonomy.en-US.txt');
+  const productsFile = getArg('--products-file', path.join(__dirname, '..', '..', 'tests', 'sample_products.txt'));
+  const taxonomyFile = getArg('--taxonomy-file', defaultTaxonomy);
+  
+  // Model configuration
+  const model = getArg('--model', 'gpt-4.1-nano');
+  const apiKey = getArg('--api-key');
+  
+  // Display options
+  const showStagePaths = hasFlag('--show-stage-paths');
+  const verbose = hasFlag('--verbose');
+
+  // Check if running directly (no command line args) - show stage paths by default
+  let showStagePathsDefault = false;
+  let verboseDefault = false;
+  let numProducts: number | null = null;
+
+  if (args.length === 0) {
+    // Running directly - enable stage display by default
+    console.log('🔍 Running in direct mode - showing AI selections at each stage by default');
+    console.log('='.repeat(80));
+    showStagePathsDefault = true;
+    verboseDefault = false;
+    
+    // Ask user how many products to run
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+    
+    const answer = await new Promise<string>((resolve) => {
+      rl.question('\n🎯 How many products would you like to test? ', resolve);
+    });
+    rl.close();
+    
+    try {
+      numProducts = parseInt(answer);
+      if (numProducts <= 0) {
+        console.log('❌ Number must be greater than 0. Using 1.');
+        numProducts = 1;
+      }
+    } catch {
+      console.log('❌ Invalid input. Using 1 product.');
+      numProducts = 1;
+    }
+    
+    console.log(`🎲 Will randomly select ${numProducts} product(s) from the sample file`);
+    console.log('='.repeat(80));
+  }
+
+  // Override show_stage_paths if running directly
+  const shouldShowStagePaths = args.length === 0 ? showStagePathsDefault : showStagePaths;
+  const shouldBeVerbose = args.length === 0 ? verboseDefault : verbose;
+
+  // Configure logging based on verbose flag
+  if (!shouldBeVerbose) {
+    // Suppress logging
+    console.debug = () => {};
+    console.info = () => {};
+    console.warn = () => {};
+  }
+
+  try {
+    // Validate and get API key
+    const resolvedApiKey = getApiKey(apiKey);
+    if (!resolvedApiKey) {
+      console.error('❌ Error: OpenAI API key not provided.');
+      console.log('💡 Please set it in data/api_key.txt, environment variable OPENAI_API_KEY, or use --api-key');
+      process.exit(1);
+    }
+
+    // Validate files exist
+    if (!fs.existsSync(productsFile)) {
+      console.error(`❌ Error: Products file '${productsFile}' not found.`);
+      process.exit(1);
+    }
+    
+    if (!fs.existsSync(taxonomyFile)) {
+      console.error(`❌ Error: Taxonomy file '${taxonomyFile}' not found.`);
+      process.exit(1);
+    }
+
+    // Initialize the taxonomy navigator
+    const navigator = new TaxonomyNavigator({
+      taxonomyFile,
+      apiKey: resolvedApiKey,
+      model,
+      enableLogging: shouldBeVerbose
+    });
+
+    // Read products from file
+    const products = testProducts;
+    
+    if (products.length === 0) {
+      console.log('❌ No products found in the file.');
+      process.exit(1);
+    }
+
+    // If running in direct mode, randomly select the specified number of products
+    let selectedProducts: string[];
+    if (args.length === 0 && numProducts !== null) {
+      if (numProducts >= products.length) {
+        console.log(`📝 Note: Requested ${numProducts} products, but only ${products.length} available. Using all products.`);
+        selectedProducts = products;
+      } else {
+        // Random selection without replacement
+        selectedProducts = [];
+        const indices = new Set<number>();
+        while (indices.size < numProducts) {
+          indices.add(Math.floor(Math.random() * products.length));
+        }
+        selectedProducts = Array.from(indices).map(i => products[i]);
+        console.log(`🎲 Randomly selected ${selectedProducts.length} products from ${products.length} total`);
+      }
+    } else {
+      // Use all products when run with command line arguments
+      selectedProducts = products;
+    }
+
+    console.log(`\n🚀 Starting Classification Process...`);
+    console.log(`   Total Products: ${selectedProducts.length}`);
+    console.log(`   Taxonomy Categories: ~5,000+ options to choose from`);
+    console.log('='.repeat(80));
+
+    // Process each selected product and display in the requested format
+    for (let i = 0; i < selectedProducts.length; i++) {
+      const productLine = selectedProducts[i];
+      
+      // Show Stage paths for every product if requested (not just the first one)
+      const showPaths = shouldShowStagePaths;
+      
+      if (showPaths) {
+        console.log(`\n${'='.repeat(20)} PRODUCT ${i + 1} of ${selectedProducts.length} ${'='.repeat(20)}`);
+        console.log('\n📦 PRODUCT DESCRIPTION:');
+        const displayText = productLine.length > 100 
+          ? `   Full: ${productLine.substring(0, 100)}...`
+          : `   Full: ${productLine}`;
+        console.log(displayText);
+        console.log('   AI will generate a 40-60 word summary for all categorization stages');
+        console.log('='.repeat(100));
+      }
+
+      // Classify the product
+      const finalLeaf = await classifyProductWithStageDisplay(navigator, productLine, showPaths);
+
+      // Display in the exact format requested: [Input] then Leaf Category
+      console.log('\n[PRODUCT INPUT]');
+      console.log(productLine);
+      console.log('\n[FINAL CATEGORY]');
+      console.log(finalLeaf);
+
+      // More prominent separation between products
+      if (i < selectedProducts.length - 1) { // Don't add separator after the last product
+        console.log('\n' + '='.repeat(100) + '\n');
+      }
+    }
+
+  } catch (error) {
+    console.error(`❌ Error: ${error}`);
+    process.exit(1);
+  }
+}
 
 /**
  * Read products from a text file, one product per line
@@ -242,189 +488,7 @@ function wrapText(text: string, width: number, indent: string = ''): string {
   return lines.join('\n');
 }
 
-/**
- * Main function for the simple batch tester
- */
-export async function main(): Promise<void> {
-  // Parse command line arguments
-  const args = process.argv.slice(2);
-  
-  // Simple argument parsing
-  const getArg = (flag: string, defaultValue?: string): string | undefined => {
-    const index = args.indexOf(flag);
-    if (index !== -1 && index + 1 < args.length) {
-      return args[index + 1];
-    }
-    return defaultValue;
-  };
-
-  const hasFlag = (flag: string): boolean => args.includes(flag);
-
-  // File configuration
-  const defaultTaxonomy = path.join(__dirname, '..', '..', 'data', 'taxonomy.en-US.txt');
-  const productsFile = getArg('--products-file', path.join(__dirname, '..', '..', 'tests', 'sample_products.txt'));
-  const taxonomyFile = getArg('--taxonomy-file', defaultTaxonomy);
-  
-  // Model configuration
-  const model = getArg('--model', 'gpt-4.1-nano');
-  const apiKey = getArg('--api-key');
-  
-  // Display options
-  const showStagePaths = hasFlag('--show-stage-paths');
-  const verbose = hasFlag('--verbose');
-
-  // Check if running directly (no command line args) - show stage paths by default
-  let showStagePathsDefault = false;
-  let verboseDefault = false;
-  let numProducts: number | null = null;
-
-  if (args.length === 0) {
-    // Running directly - enable stage display by default
-    console.log('🔍 Running in direct mode - showing AI selections at each stage by default');
-    console.log('='.repeat(80));
-    showStagePathsDefault = true;
-    verboseDefault = false;
-    
-    // Ask user how many products to run
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
-    
-    const answer = await new Promise<string>((resolve) => {
-      rl.question('\n🎯 How many products would you like to test? ', resolve);
-    });
-    rl.close();
-    
-    try {
-      numProducts = parseInt(answer);
-      if (numProducts <= 0) {
-        console.log('❌ Number must be greater than 0. Using 1.');
-        numProducts = 1;
-      }
-    } catch {
-      console.log('❌ Invalid input. Using 1 product.');
-      numProducts = 1;
-    }
-    
-    console.log(`🎲 Will randomly select ${numProducts} product(s) from the sample file`);
-    console.log('='.repeat(80));
-  }
-
-  // Override show_stage_paths if running directly
-  const shouldShowStagePaths = args.length === 0 ? showStagePathsDefault : showStagePaths;
-  const shouldBeVerbose = args.length === 0 ? verboseDefault : verbose;
-
-  // Configure logging based on verbose flag
-  if (!shouldBeVerbose) {
-    // Suppress logging
-    console.debug = () => {};
-    console.info = () => {};
-    console.warn = () => {};
-  }
-
-  try {
-    // Validate and get API key
-    const resolvedApiKey = getApiKey(apiKey);
-    if (!resolvedApiKey) {
-      console.error('❌ Error: OpenAI API key not provided.');
-      console.log('💡 Please set it in data/api_key.txt, environment variable OPENAI_API_KEY, or use --api-key');
-      process.exit(1);
-    }
-
-    // Validate files exist
-    if (!fs.existsSync(productsFile)) {
-      console.error(`❌ Error: Products file '${productsFile}' not found.`);
-      process.exit(1);
-    }
-    
-    if (!fs.existsSync(taxonomyFile)) {
-      console.error(`❌ Error: Taxonomy file '${taxonomyFile}' not found.`);
-      process.exit(1);
-    }
-
-    // Initialize the taxonomy navigator
-    const navigator = new TaxonomyNavigator({
-      taxonomyFile,
-      apiKey: resolvedApiKey,
-      model,
-      enableLogging: shouldBeVerbose
-    });
-
-    // Read products from file
-    const products = readProductsFile(productsFile);
-    
-    if (products.length === 0) {
-      console.log('❌ No products found in the file.');
-      process.exit(1);
-    }
-
-    // If running in direct mode, randomly select the specified number of products
-    let selectedProducts: string[];
-    if (args.length === 0 && numProducts !== null) {
-      if (numProducts >= products.length) {
-        console.log(`📝 Note: Requested ${numProducts} products, but only ${products.length} available. Using all products.`);
-        selectedProducts = products;
-      } else {
-        // Random selection without replacement
-        selectedProducts = [];
-        const indices = new Set<number>();
-        while (indices.size < numProducts) {
-          indices.add(Math.floor(Math.random() * products.length));
-        }
-        selectedProducts = Array.from(indices).map(i => products[i]);
-        console.log(`🎲 Randomly selected ${selectedProducts.length} products from ${products.length} total`);
-      }
-    } else {
-      // Use all products when run with command line arguments
-      selectedProducts = products;
-    }
-
-    console.log(`\n🚀 Starting Classification Process...`);
-    console.log(`   Total Products: ${selectedProducts.length}`);
-    console.log(`   Taxonomy Categories: ~5,000+ options to choose from`);
-    console.log('='.repeat(80));
-
-    // Process each selected product and display in the requested format
-    for (let i = 0; i < selectedProducts.length; i++) {
-      const productLine = selectedProducts[i];
-      
-      // Show Stage paths for every product if requested (not just the first one)
-      const showPaths = shouldShowStagePaths;
-      
-      if (showPaths) {
-        console.log(`\n${'='.repeat(20)} PRODUCT ${i + 1} of ${selectedProducts.length} ${'='.repeat(20)}`);
-        console.log('\n📦 PRODUCT DESCRIPTION:');
-        const displayText = productLine.length > 100 
-          ? `   Full: ${productLine.substring(0, 100)}...`
-          : `   Full: ${productLine}`;
-        console.log(displayText);
-        console.log('   AI will generate a 40-60 word summary for all categorization stages');
-        console.log('='.repeat(100));
-      }
-
-      // Classify the product
-      const finalLeaf = await classifyProductWithStageDisplay(navigator, productLine, showPaths);
-
-      // Display in the exact format requested: [Input] then Leaf Category
-      console.log('\n[PRODUCT INPUT]');
-      console.log(productLine);
-      console.log('\n[FINAL CATEGORY]');
-      console.log(finalLeaf);
-
-      // More prominent separation between products
-      if (i < selectedProducts.length - 1) { // Don't add separator after the last product
-        console.log('\n' + '='.repeat(100) + '\n');
-      }
-    }
-
-  } catch (error) {
-    console.error(`❌ Error: ${error}`);
-    process.exit(1);
-  }
-}
-
 // Run if executed directly
 if (require.main === module) {
-  main().catch(console.error);
+  runBatchTest().catch(console.error);
 } 
