@@ -199,7 +199,7 @@ export class TaxonomyNavigator {
     maxRetries: 3,
     enableLogging: true,
     rateLimit: {
-      requestsPerSecond: 2  // Default to 2 request per second
+      requestsPerSecond: 5  // Default to 5 request per second
     }
   };
 
@@ -987,7 +987,7 @@ The number must be between 1 and ${leaves.length}.`;
   // private async checkRateLimit(): Promise<void> {
   //   const now = Date.now();
   //   const timeSinceLastRequest = now - this.lastRequestTime;
-  //   const minTimeBetweenRequests = 500 / (this.config.rateLimit.requestsPerSecond || 1);
+  //   const minTimeBetweenRequests = 200 / (this.config.rateLimit.requestsPerSecond || 1);
   //   
   //   if (timeSinceLastRequest < minTimeBetweenRequests) {
   //     const waitTime = minTimeBetweenRequests - timeSinceLastRequest;
