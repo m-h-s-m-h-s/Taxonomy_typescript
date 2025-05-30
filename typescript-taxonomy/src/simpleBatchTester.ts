@@ -126,8 +126,8 @@ async function runBatchTest() {
 
   // File configuration
   const defaultTaxonomy = path.join(__dirname, '..', '..', 'data', 'taxonomy.en-US.txt');
-  const productsFile = getArg('--products-file', path.join(__dirname, '..', '..', 'tests', 'sample_products.txt'));
-  const taxonomyFile = getArg('--taxonomy-file', defaultTaxonomy);
+  const productsFile = args.find(arg => arg.endsWith('.txt')) || path.join(__dirname, '../tests/sample_products.txt');
+  const taxonomyFile = getArg('--taxonomy-file', defaultTaxonomy) || defaultTaxonomy;
   
   // Model configuration
   const model = getArg('--model', 'gpt-4.1-nano');
@@ -196,15 +196,19 @@ async function runBatchTest() {
       process.exit(1);
     }
 
-    // Validate files exist
+    // Check if products file exists
     if (!fs.existsSync(productsFile)) {
-      console.error(`❌ Error: Products file '${productsFile}' not found.`);
-      process.exit(1);
+        console.error(`❌ Products file not found: ${productsFile}`);
+        return;
     }
-    
+
+    // Check if taxonomy file exists
     if (!fs.existsSync(taxonomyFile)) {
-      console.error(`❌ Error: Taxonomy file '${taxonomyFile}' not found.`);
-      process.exit(1);
+        console.error(`❌ Taxonomy file not found: ${taxonomyFile}`);
+        console.log('\nPlease download the taxonomy file from:');
+        console.log('https://support.google.com/merchants/answer/6324436');
+        console.log(`and save it to: ${path.join(__dirname, '../data/taxonomy.en-US.txt')}`);
+        return;
     }
 
     // Initialize the taxonomy navigator

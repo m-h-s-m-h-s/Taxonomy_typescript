@@ -1,28 +1,41 @@
 {
   "name": "typescript-taxonomy",
   "version": "1.0.0",
-  "description": "TypeScript implementation of AI-powered product taxonomy classification",
+  "description": "TypeScript implementation of AI-powered product taxonomy classification using Google's product categories and OpenAI GPT models",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/m-h-s-m-h-s/Taxonomy_typescript.git"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "start": "node dist/example.js",
+    "start": "node dist/examples/usage-examples.js",
     "check": "node scripts/check-setup.js",
     "test": "jest",
     "interactive": "node dist/interactiveInterface.js",
     "batch-test": "node dist/simpleBatchTester.js",
     "classify": "node scripts/classify-single-product.js",
-    "analyze-batch": "node scripts/analyze-batch-products.js"
+    "test-random": "node scripts/test-random-products.js"
   },
   "bin": {
     "taxonomy-interactive": "./dist/interactiveInterface.js",
     "taxonomy-test": "./dist/simpleBatchTester.js",
-    "taxonomy-classify": "./scripts/classify-single-product.js",
-    "taxonomy-batch": "./scripts/analyze-batch-products.js"
+    "taxonomy-classify": "./scripts/classify-single-product.js"
   },
-  "keywords": ["taxonomy", "classification", "openai", "product-categorization"],
-  "author": "",
+  "keywords": [
+    "taxonomy", 
+    "classification", 
+    "openai", 
+    "gpt", 
+    "product-categorization",
+    "google-taxonomy",
+    "ai",
+    "machine-learning",
+    "e-commerce"
+  ],
+  "author": "MHS",
   "license": "MIT",
   "dependencies": {
     "openai": "^4.0.0",
@@ -31,5 +44,8 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }

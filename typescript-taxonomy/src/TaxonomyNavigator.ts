@@ -238,8 +238,12 @@ export class TaxonomyNavigator {
       }
     };
 
-    // Get API key
-    this.config.apiKey = getApiKey(this.config.apiKey);
+    // Load API key if not provided
+    const apiKey = getApiKey(this.config.apiKey);
+    if (!apiKey) {
+      throw new Error('API key is required. Set OPENAI_API_KEY environment variable or provide in configuration.');
+    }
+    this.config.apiKey = apiKey;
 
     // Initialize OpenAI
     this.openai = new OpenAI({

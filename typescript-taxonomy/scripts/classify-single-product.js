@@ -1,15 +1,29 @@
 #!/usr/bin/env node
 
 /**
- * Classify Single Product Script
+ * Single Product Classification Script
  * 
- * Simple script to classify a single product using the Taxonomy Navigator
+ * This script allows you to quickly classify a single product from the command line.
+ * It's useful for testing and one-off categorizations without using the interactive mode.
  * 
  * Usage:
- *   node classify-single-product.js "Product description here"
- *   
- * Example:
- *   node classify-single-product.js "iPhone 14 Pro: Smartphone with advanced camera"
+ *   npm run classify -- "product description"
+ *   OR
+ *   node scripts/classify-single-product.js "product description"
+ * 
+ * Examples:
+ *   npm run classify -- "iPhone 14 Pro with 256GB storage"
+ *   npm run classify -- "Nike Air Max running shoes"
+ *   npm run classify -- "KitchenAid stand mixer"
+ * 
+ * Output:
+ *   - Category path (e.g., "Electronics > Computers > Laptops")
+ *   - Processing time
+ *   - Number of API calls made
+ * 
+ * Requirements:
+ *   - OpenAI API key must be configured
+ *   - Taxonomy file must be present in data/taxonomy.en-US.txt
  */
 
 const { TaxonomyNavigator } = require('../dist/TaxonomyNavigator');

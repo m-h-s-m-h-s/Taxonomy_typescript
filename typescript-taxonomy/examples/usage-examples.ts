@@ -4,7 +4,7 @@
  * This demonstrates both scrappy and robust usage patterns
  */
 
-import { TaxonomyNavigator, ClassificationResult } from './index';
+import { TaxonomyNavigator, ClassificationResult } from '../src/index';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
 
@@ -66,8 +66,7 @@ async function robustExample() {
       enableLogging: false, // Disable logging in production
       maxRetries: 3,
       rateLimit: {
-        maxRequestsPerMinute: 50,
-        maxRequestsPerDay: 5000
+        requestsPerSecond: 1 // Changed from maxRequestsPerMinute and maxRequestsPerDay
       }
     });
 

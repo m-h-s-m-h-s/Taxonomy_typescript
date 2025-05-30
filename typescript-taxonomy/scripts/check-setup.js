@@ -1,9 +1,25 @@
 #!/usr/bin/env node
 
 /**
- * Setup Checker Script
+ * Setup Verification Script
  * 
- * This script verifies that everything is set up correctly for using the Taxonomy Navigator
+ * This script verifies that the Taxonomy Navigator is properly set up and ready to use.
+ * It checks for:
+ * - Node.js version compatibility
+ * - Required npm dependencies
+ * - TypeScript compilation status
+ * - Taxonomy data file presence
+ * - API key configuration
+ * - Sample test data availability
+ * 
+ * Usage:
+ *   npm run check
+ *   OR
+ *   node scripts/check-setup.js
+ * 
+ * Exit codes:
+ *   0 - All checks passed
+ *   1 - One or more checks failed
  */
 
 const fs = require('fs');

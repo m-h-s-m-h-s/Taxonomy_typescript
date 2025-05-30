@@ -1,4 +1,6 @@
-import { TaxonomyNavigator } from './src/TaxonomyNavigator';
+import { TaxonomyNavigator } from '../src/TaxonomyNavigator';
+import * as fs from 'fs';
+import * as path from 'path';
 
 async function testProduct() {
   try {
@@ -30,7 +32,7 @@ async function testProduct() {
       
       if (result.paths.length > 1) {
         console.log(`\n🔍 Other candidates considered:`);
-        result.paths.slice(0, 5).forEach((path, i) => {
+        result.paths.slice(0, 5).forEach((path: string[], i: number) => {
           if (i !== result.bestMatchIndex) {
             console.log(`   - ${path.join(' > ')}`);
           }

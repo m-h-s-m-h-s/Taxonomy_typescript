@@ -1,4 +1,7 @@
-# API Keys - NEVER commit these!
+# ==========================================
+# API Keys and Sensitive Data
+# ==========================================
+# NEVER commit API keys or credentials to version control
 data/api_key.txt
 api_key.txt
 *.key
@@ -7,30 +10,76 @@ api_key.txt
 .env.production
 .env.*.local
 
+# ==========================================
 # Dependencies
+# ==========================================
+# Node.js dependencies - these can be reinstalled with npm install
 node_modules/
+# npm cache directory
 .npm
 
-# Build outputs
+# ==========================================
+# Build Outputs
+# ==========================================
+# Compiled JavaScript and TypeScript declaration files
 dist/
 build/
+# Log files from various tools
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# IDE files
+# ==========================================
+# IDE and Editor Files
+# ==========================================
+# Visual Studio Code settings
 .vscode/
+# JetBrains IDEs (WebStorm, IntelliJ)
 .idea/
+# Vim swap files
 *.swp
 *.swo
+# macOS directory metadata
 .DS_Store
+# Windows directory metadata
+Thumbs.db
 
+# ==========================================
 # TypeScript
+# ==========================================
+# TypeScript incremental compilation cache
 *.tsbuildinfo
 
-# Test coverage
+# ==========================================
+# Testing and Coverage
+# ==========================================
+# Test coverage reports
 coverage/
 .nyc_output/
 
-# Temporary files
+# ==========================================
+# Temporary Files
+# ==========================================
+# Temporary directories
 tmp/
 temp/
-*.tmp 
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*~
+
+# ==========================================
+# OS-Specific Files
+# ==========================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+# Linux
+.directory 
