@@ -199,7 +199,7 @@ export class TaxonomyNavigator {
     maxRetries: 3,
     enableLogging: true,
     rateLimit: {
-      requestsPerSecond: 1  // Default to 1 request per second
+      requestsPerSecond: 2  // Default to 2 request per second
     }
   };
 
