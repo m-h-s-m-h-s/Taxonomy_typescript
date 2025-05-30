@@ -1,0 +1,34 @@
+{
+  "name": "typescript-taxonomy",
+  "version": "1.0.0",
+  "description": "TypeScript implementation of AI-powered product taxonomy classification",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/example.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "interactive": "node dist/interactiveInterface.js",
+    "batch-test": "node dist/simpleBatchTester.js",
+    "classify": "node scripts/classify-single-product.js",
+    "analyze-batch": "node scripts/analyze-batch-products.js"
+  },
+  "bin": {
+    "taxonomy-interactive": "./dist/interactiveInterface.js",
+    "taxonomy-test": "./dist/simpleBatchTester.js",
+    "taxonomy-classify": "./scripts/classify-single-product.js",
+    "taxonomy-batch": "./scripts/analyze-batch-products.js"
+  },
+  "keywords": ["taxonomy", "classification", "openai", "product-categorization"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "openai": "^4.0.0",
+    "dotenv": "^16.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

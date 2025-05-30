@@ -1,15 +1,23 @@
-# Taxonomy Navigator - AI-Powered Product Categorization System
+# Taxonomy Navigator - AI-Powered Product Categorization System (TypeScript)
 
 An intelligent, optimized AI classification system that automatically categorizes products into appropriate taxonomy categories using OpenAI's GPT models with aggressive anti-hallucination measures and AI-powered summarization.
+
+**This is a TypeScript implementation** that maintains complete feature parity with the original Python version.
 
 ## 🚀 Quick Start - See It In Action!
 
 **Want to understand how this works? Start here:**
 
 ```bash
-# First, see the system in action with 3 random products:
-cd tests
-python3 simple_batch_tester.py
+# First, install dependencies
+cd typescript-taxonomy
+npm install
+
+# Build the TypeScript code
+npm run build
+
+# Run the batch tester to see the system in action:
+npm run batch-test
 
 # When prompted, enter the number of products to test (e.g., 3)
 # Watch as the AI classifies products step-by-step!
@@ -24,7 +32,64 @@ This will show you:
 
 ## 🎯 System Overview
 
-The Taxonomy Navigator uses a sophisticated progressive filtering approach with AI-powered summarization and numeric selection that efficiently narrows down from thousands of categories to a single best match.
+The Taxonomy Navigator uses a sophisticated progressive filtering approach with AI-powered summarization and numeric selection that efficiently narrows down from 5,000+ categories to a single best match.
+
+## Installation
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd Taxonomy_typescript/typescript-taxonomy
+
+# Install dependencies
+npm install
+
+# Set up your OpenAI API key
+export OPENAI_API_KEY=your-key-here
+# OR create a file: echo "your-key" > data/api_key.txt
+
+# Build the TypeScript code
+npm run build
+```
+
+## Usage
+
+### Interactive Mode
+```bash
+npm run interactive
+```
+
+### Batch Testing with Visualization
+```bash
+npm run batch-test
+```
+
+### Classify Single Product
+```bash
+npm run classify -- "iPhone 14 Pro: Smartphone with advanced camera"
+```
+
+### Analyze Batch of Products
+```bash
+npm run analyze-batch
+```
+
+### Programmatic Usage
+```typescript
+import { TaxonomyNavigator } from './typescript-taxonomy';
+
+const navigator = new TaxonomyNavigator({
+  taxonomyFile: './data/taxonomy.en-US.txt',
+  apiKey: 'your-api-key'
+});
+
+const result = await navigator.classifyProduct(
+  'Samsung 65-inch QLED TV with smart features'
+);
+
+console.log(result.leafCategory); // "Televisions"
+console.log(result.bestMatch);    // "Electronics > Video > Televisions"
+```
 
 ## The Core Challenge We're Solving
 
@@ -125,6 +190,33 @@ Result: Perfect match every time!
 - **Skip if only 1 option**: No need to choose when there's no choice
 - **Model upgrade**: `gpt-4.1-mini` for balanced accuracy and cost
 - **Numeric selection**: Continues to prevent errors
+
+## 📁 Project Structure
+
+```
+typescript-taxonomy/
+├── src/
+│   ├── TaxonomyNavigator.ts      # Core classification engine
+│   ├── config.ts                 # Configuration management
+│   ├── interactiveInterface.ts   # Interactive CLI
+│   ├── simpleBatchTester.ts      # Batch testing tool
+│   ├── example.ts                # Usage examples
+│   ├── types.ts                  # TypeScript interfaces
+│   └── index.ts                  # Module exports
+├── scripts/
+│   ├── classify-single-product.js
+│   └── analyze-batch-products.js
+├── data/
+│   └── taxonomy.en-US.txt        # Google Product Taxonomy
+├── tests/
+│   └── sample_products.txt       # Sample test products
+├── package.json
+├── tsconfig.json
+└── Documentation
+    ├── README.md
+    ├── DEVELOPER_GUIDE.md
+    └── INTEGRATION_GUIDE.md
+```
 
 ## 🏗️ Architecture Deep Dive
 
@@ -324,6 +416,12 @@ Without proper measures, AI classification systems fail in predictable ways:
 - **Default**: ~10 products/second sustainable
 - **Burst**: Can handle 50+ products/second briefly
 - **Solution**: Implement rate limiting in your application
+
+## 📄 Documentation
+
+- [Developer Guide](typescript-taxonomy/DEVELOPER_GUIDE.md) - Detailed technical documentation
+- [Integration Guide](typescript-taxonomy/INTEGRATION_GUIDE.md) - Quick integration instructions
+- [Complete Port README](typescript-taxonomy/COMPLETE_PORT_README.md) - Migration from Python details
 
 ## 📄 License
 
