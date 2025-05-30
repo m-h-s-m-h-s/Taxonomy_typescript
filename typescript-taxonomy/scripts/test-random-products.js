@@ -1,206 +1,252 @@
-#!/usr/bin/env node
-
 /**
- * Test random products from the sample dataset
+ * Test Random Products Script
  * 
- * Usage: node scripts/test-random-products.js [number]
- * Example: node scripts/test-random-products.js 5
+ * Randomly selects and classifies products from the test dataset.
+ * Displays detailed stage-by-stage AI selections like the Python version.
+ * 
+ * Usage:
+ *   npm run test-random 5        # Test 5 random products
+ *   npm run test-random          # Test 1 random product (default)
+ *   node scripts/test-random-products.js 3
+ * 
+ * Exit codes:
+ *   0 - All tests completed successfully
+ *   1 - Configuration or setup error
+ *   2 - Runtime error during classification
  */
 
-const { TaxonomyNavigator } = require('../dist/TaxonomyNavigator');
+const path = require('path');
+const fs = require('fs');
 
-// Sample products from tests/sample_products.txt
-const testProducts = [
-  {
-    name: 'Microsoft Surface Laptop Go Computer',
-    description: 'Microsoft Surface Laptop Go 8GB/256GB 12.4-inch Touchscreen Laptop with 10th Gen Intel Core i5-1035G1 Processor, Windows 10 Home in S mode.'
-  },
-  {
-    name: 'Microsoft Xbox Controllers',
-    description: 'Microsoft Xbox Wireless Bluetooth Controllers with USB, Carbon Black, 2-Pack. Compatible with Xbox Series X/S, Xbox One, PC, Android, and iOS.'
-  },
-  {
-    name: 'Aesop Hand Soap',
-    description: "Reverence Aromatique Hand Wash with finely milled pumice, vetiver root, petitgrain, and bergamot rind for gentle exfoliation and deep cleansing."
-  },
-  {
-    name: 'iPhone 14 Pro Smartphone',
-    description: 'Apple iPhone 14 Pro with 6.1-inch Super Retina XDR display featuring ProMotion technology with adaptive refresh rates up to 120Hz. Powered by A16 Bionic chip.'
-  },
-  {
-    name: 'Sony WH-1000XM5 Wireless Headphones',
-    description: 'Premium noise-canceling over-ear headphones with industry-leading noise cancellation technology. Features 30mm drivers with up to 30 hours battery life.'
-  },
-  {
-    name: 'KitchenAid Stand Mixer',
-    description: 'KitchenAid Artisan Series 5-Quart Tilt-Head Stand Mixer with 10 speeds and planetary mixing action. 325-watt motor handles heavy mixtures with ease.'
-  },
-  {
-    name: 'Nike Air Max 270 Sneakers',
-    description: "Men's lifestyle sneakers featuring Nike's largest heel Air unit for maximum comfort and impact protection. Engineered mesh upper provides breathability."
-  },
-  {
-    name: 'Samsung 65-inch QLED 4K Smart TV',
-    description: 'Samsung QN65Q80C 65-inch Neo QLED 4K Smart TV with Quantum HDR 24x and Direct Full Array backlighting. Powered by Neural Quantum Processor 4K.'
-  },
-  {
-    name: 'Instant Pot Duo 7-in-1',
-    description: '6-quart multi-use programmable pressure cooker that replaces 7 kitchen appliances. Functions include pressure cooker, slow cooker, rice cooker, and more.'
-  },
-  {
-    name: "Levi's 501 Original Fit Jeans",
-    description: 'Classic straight-leg jeans with button fly and original fit through seat and thigh. Made from 100% cotton denim with no stretch for authentic vintage feel.'
-  },
-  {
-    name: 'Dyson V15 Detect Cordless Vacuum',
-    description: 'Cordless stick vacuum with laser dust detection technology and LCD screen showing particle count and size. Powered by Dyson Hyperdymium motor.'
-  },
-  {
-    name: 'LEGO Creator Expert Taj Mahal',
-    description: 'Detailed replica building set with 5,923 pieces for advanced builders ages 16+. Measures over 16 inches high when completed.'
-  },
-  {
-    name: 'Canon EOS R6 Mark II Camera',
-    description: 'Full-frame mirrorless camera with 24.2MP CMOS sensor and DIGIC X image processor. Features 4K 60p video recording with 10-bit internal recording.'
-  },
-  {
-    name: 'Patagonia Better Sweater Fleece Jacket',
-    description: 'Classic full-zip fleece jacket made from 100% recycled polyester fleece. Features stand-up collar and zippered handwarmer pockets.'
-  },
-  {
-    name: 'Barbie Dreamhouse Dollhouse',
-    description: 'Three-story dollhouse with 10 rooms including kitchen, bathroom, bedroom, and rooftop pool. Features working elevator, lights, and sounds.'
-  },
-  {
-    name: 'Hot Wheels Track Builder Unlimited',
-    description: 'Motorized track set with triple loop-the-loop action and booster. Includes 16+ feet of orange track pieces and connectors.'
-  },
-  {
-    name: 'Nerf Elite 2.0 Commander Blaster',
-    description: 'Foam dart blaster with 6-dart rotating drum and tactical rail accessories. Fires darts up to 90 feet with pump-action priming.'
-  },
-  {
-    name: 'DeWalt 20V MAX Cordless Drill',
-    description: 'Professional-grade cordless drill with brushless motor and 20V lithium-ion battery. Features 2-speed transmission with high-performance motor.'
-  },
-  {
-    name: 'Milwaukee M18 FUEL Circular Saw',
-    description: '18V cordless circular saw with brushless motor technology. 7-1/4 inch blade capacity cuts 2-9/16 inches at 90 degrees.'
-  },
-  {
-    name: 'Adidas Ultraboost 22 Running Shoes',
-    description: "Women's running shoes with Boost midsole technology for energy return. Primeknit upper adapts to foot shape for comfort."
-  },
-  {
-    name: 'Lululemon Align High-Rise Leggings',
-    description: "Women's yoga leggings made from buttery-soft Nulu fabric. High-rise waistband sits above hip bones for coverage. Four-way stretch."
-  },
-  {
-    name: 'Fenty Beauty Pro Filt\'r Foundation',
-    description: 'Full-coverage liquid foundation with soft matte finish. Available in 50 shades to match diverse skin tones. Long-wearing formula resists heat and humidity.'
-  },
-  {
-    name: 'Charlotte Tilbury Pillow Talk Lipstick',
-    description: 'Matte revolution lipstick in universally flattering nude-pink shade. Enriched with peptides and antioxidants for lip care benefits.'
-  },
-  {
-    name: 'Wilson Pro Staff Tennis Racket',
-    description: 'Professional tennis racket with 97 square inch head size. 16x19 string pattern for spin generation. Perimeter weighting for stability and power.'
-  },
-  {
-    name: 'Spalding NBA Official Basketball',
-    description: 'Official size and weight basketball used in NBA games. Full-grain leather construction with deep channel design.'
-  },
-  {
-    name: 'Yeti Rambler Tumbler',
-    description: '20 oz stainless steel tumbler with double-wall vacuum insulation. Keeps drinks cold for 24+ hours or hot for 6+ hours.'
-  },
-  {
-    name: 'Coleman Sundome Camping Tent',
-    description: '4-person dome tent with easy setup in 10 minutes. WeatherTec system with welded floors and inverted seams.'
-  },
-  {
-    name: 'Peloton Bike+',
-    description: 'Indoor exercise bike with 23.8-inch rotating HD touchscreen. Live and on-demand cycling classes with world-class instructors.'
-  },
-  {
-    name: 'Organic Valley Whole Milk',
-    description: 'USDA organic whole milk from pasture-raised cows. No artificial hormones, antibiotics, or pesticides.'
-  },
-  {
-    name: 'Honey Nut Cheerios Cereal',
-    description: 'Whole grain oat cereal with real honey and natural almond flavor. Good source of fiber and essential vitamins.'
+// Function to wrap text nicely
+function wrapText(text, width = 70, indent = '   ') {
+  const words = text.split(' ');
+  const lines = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    if ((currentLine + ' ' + word).length > width) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = currentLine ? currentLine + ' ' + word : word;
+    }
   }
-];
+  if (currentLine) {
+    lines.push(currentLine);
+  }
 
-// Function to get random products
-function getRandomProducts(count) {
-  const shuffled = [...testProducts].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, count);
+  return lines.map(line => indent + line).join('\n');
 }
 
-async function classifyTestProducts() {
-  console.log('🔍 Product Classification Test\n');
-  console.log(`Total available products: ${testProducts.length}`);
-  
-  // Get count from command line arguments or default to 3
-  const args = process.argv.slice(2);
-  const requestedCount = args[0] ? parseInt(args[0]) : 3;
-  
-  if (isNaN(requestedCount) || requestedCount < 1) {
-    console.log('❌ Please provide a valid number greater than 0');
-    console.log('Usage: node scripts/test-random-products.js [number]');
-    console.log('Example: node scripts/test-random-products.js 5');
-    return;
-  }
-  
-  const count = Math.min(requestedCount, testProducts.length);
-  if (requestedCount > testProducts.length) {
-    console.log(`⚠️  Only ${testProducts.length} products available. Classifying all of them.`);
-  }
-  
-  // Get random products
-  const selectedProducts = getRandomProducts(count);
-  
-  console.log(`\n✨ Randomly selected ${count} product${count > 1 ? 's' : ''} for classification\n`);
-  console.log('Note: The system takes product name + description and generates AI summaries internally.\n');
-  
+async function main() {
   try {
-    const navigator = new TaxonomyNavigator();
+    console.log('🔍 Product Classification Test\n');
+
+    // Get number of products to test from command line
+    const args = process.argv.slice(2);
+    let numProducts = 1; // default
     
-    for (let i = 0; i < selectedProducts.length; i++) {
-      const product = selectedProducts[i];
-      console.log(`\n📦 Product ${i + 1}/${count}: ${product.name}`);
-      console.log(`📝 Input Description: ${product.description.substring(0, 80)}...`);
-      
-      try {
-        // classifyProduct takes a single string that combines name and description
-        const productInfo = `${product.name}: ${product.description}`;
-        const result = await navigator.classifyProduct(productInfo);
-        
-        console.log(`✅ Category: ${result.bestMatch}`);
-        console.log(`📊 Processing Time: ${result.processingTime}ms`);
-        console.log(`📞 API Calls: ${result.apiCalls}`);
-        
-        // Note: The summary is generated internally but not returned in the current interface
-        console.log(`🎯 Leaf Category: ${result.leafCategory}`);
-        
-      } catch (error) {
-        console.error(`❌ Error: ${error.message || 'Unknown error'}`);
+    if (args.length > 0) {
+      numProducts = parseInt(args[0]);
+      if (isNaN(numProducts) || numProducts < 1) {
+        console.error('❌ Please provide a valid number of products to test');
+        process.exit(1);
       }
     }
+
+    // Check if compiled JavaScript exists
+    const distPath = path.join(__dirname, '..', 'dist');
+    if (!fs.existsSync(distPath)) {
+      console.error('❌ Compiled JavaScript not found. Please run: npm run build');
+      process.exit(1);
+    }
+
+    // Import the navigator
+    const { TaxonomyNavigator } = require('../dist/src/TaxonomyNavigator');
     
-    console.log('\n✨ Classification complete!');
-    console.log('\nKey Points:');
-    console.log('- You provide product name and description as a single string');
-    console.log('- The system generates focused AI summaries automatically');
-    console.log('- Each product is intelligently matched to Google\'s taxonomy');
-    console.log(`- Cost per classification: ~$0.001-0.002`);
-    console.log(`- Estimated total cost: ~$${(count * 0.0015).toFixed(4)}`);
+    // Read products file
+    const productsFile = path.join(__dirname, '..', 'tests', 'sample_products.txt');
+    if (!fs.existsSync(productsFile)) {
+      console.error('❌ Products file not found:', productsFile);
+      process.exit(1);
+    }
+
+    // Parse products from file (handle different formats)
+    const fileContent = fs.readFileSync(productsFile, 'utf8');
+    let products = [];
+    
+    // Check if it's JSON format
+    try {
+      const jsonData = JSON.parse(fileContent);
+      if (Array.isArray(jsonData)) {
+        products = jsonData.map(item => {
+          if (typeof item === 'string') return item;
+          if (item.title && item.description) return `${item.title}: ${item.description}`;
+          if (item.name && item.description) return `${item.name}: ${item.description}`;
+          return JSON.stringify(item);
+        });
+      }
+    } catch {
+      // Not JSON, treat as line-separated
+      products = fileContent
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0);
+    }
+
+    if (products.length === 0) {
+      console.error('❌ No products found in file');
+      process.exit(1);
+    }
+
+    console.log(`Total available products: ${products.length}\n`);
+
+    // Randomly select products
+    const selectedProducts = [];
+    const availableIndices = [...Array(products.length).keys()];
+    
+    for (let i = 0; i < Math.min(numProducts, products.length); i++) {
+      const randomIndex = Math.floor(Math.random() * availableIndices.length);
+      const productIndex = availableIndices[randomIndex];
+      selectedProducts.push(products[productIndex]);
+      availableIndices.splice(randomIndex, 1);
+    }
+
+    console.log(`✨ Randomly selected ${selectedProducts.length} product${selectedProducts.length > 1 ? 's' : ''} for classification\n`);
+    console.log('Note: The system generates AI summaries internally for categorization.\n');
+
+    // Initialize navigator
+    const navigator = new TaxonomyNavigator({
+      enableLogging: false // We'll show our own formatted output
+    });
+
+    // Track for summary stats
+    let successCount = 0;
+    let totalApiCalls = 0;
+    let totalTime = 0;
+
+    // Process each product
+    for (let i = 0; i < selectedProducts.length; i++) {
+      const product = selectedProducts[i];
+      const productTitle = product.split(':')[0].trim();
+      const productNum = i + 1;
+
+      console.log(`${'='.repeat(20)} ANALYZING PRODUCT ${productNum} ${'='.repeat(20)}`);
+      console.log(`📦 ${product}\n`);
+
+      try {
+        // Enable detailed stage information
+        const startTime = Date.now();
+        const result = await navigator.classifyProduct(product);
+        const elapsedTime = Date.now() - startTime;
+
+        if (result.success && result.stageDetails) {
+          const details = result.stageDetails;
+          
+          // Show AI summary
+          console.log('📝 AI SUMMARY:');
+          console.log(wrapText(details.aiSummary));
+          
+          // Stage 1
+          console.log('\n📋 STAGE 1 - AI selecting top 2 L1 taxonomies from all categories...');
+          console.log(`✅ AI selected ${details.stage1L1Categories.length} L1 categories: [${details.stage1L1Categories.join(', ')}]`);
+          
+          // Stage 2A
+          console.log('\n📋 STAGE 2A - AI selecting leaf nodes from chosen L1 taxonomies...');
+          if (details.stage2aLeaves.length > 0) {
+            console.log(`✅ AI selected ${details.stage2aLeaves.length} leaf nodes from ${details.stage1L1Categories[0] || 'first L1'}`);
+          } else {
+            console.log(`⚠️ No specific categories found in '${details.stage1L1Categories[0] || 'first L1'}' section`);
+          }
+          
+          // Stage 2B
+          if (!details.stage2bSkipped) {
+            console.log('\n📋 STAGE 2B - AI selecting additional leaf nodes...');
+            if (details.stage2bLeaves.length > 0) {
+              console.log(`✅ AI selected ${details.stage2bLeaves.length} additional leaf nodes from ${details.stage1L1Categories[1] || 'second L1'}`);
+            } else {
+              console.log(`⚠️ No specific categories found in '${details.stage1L1Categories[1] || 'second L1'}' section`);
+            }
+          } else {
+            console.log('\n📋 STAGE 2B - SKIPPED');
+            console.log('   Reason: Only 1 main category was selected, no need to check a second');
+          }
+          
+          // Stage 3
+          if (details.totalCandidates === 0) {
+            console.log('\n📋 STAGE 3 - CANNOT PROCEED');
+            console.log('   Reason: No specific categories were found');
+          } else if (details.stage3Skipped) {
+            console.log('\n📋 STAGE 3 - SKIPPED - Using Single Result');
+            console.log('   Reason: Only 1 category found, no need to choose');
+          } else {
+            console.log(`\n📋 STAGE 3 - AI selecting final match from ${details.totalCandidates} candidates...`);
+          }
+          
+          console.log(`🎯 FINAL RESULT: ${result.bestMatch}`);
+          
+          console.log(`\n[${product}]`);
+          console.log(result.leafCategory);
+          
+          successCount++;
+          totalApiCalls += result.apiCalls;
+          totalTime += elapsedTime;
+        } else if (result.success) {
+          // Fallback if no stage details (shouldn't happen with our new code)
+          console.log('📝 AI SUMMARY: Generating focused product summary...');
+          console.log('\n📋 STAGE 1 - AI selecting top 2 L1 taxonomies from all categories...');
+          console.log('✅ AI selected 2 L1 categories: [Categories selected internally]');
+          console.log('\n📋 STAGE 2 - AI selecting top 15 leaf nodes from chosen L1 taxonomies...');
+          console.log('✅ AI selected leaf nodes from selected L1 categories');
+          console.log('\n📋 STAGE 3 - AI selecting final match from candidates...');
+          console.log(`🎯 FINAL RESULT: ${result.bestMatch}`);
+          
+          console.log(`\n[${product}]`);
+          console.log(result.leafCategory);
+          
+          successCount++;
+          totalApiCalls += result.apiCalls;
+          totalTime += elapsedTime;
+        } else {
+          console.log(`❌ Classification failed: ${result.error || 'Unknown error'}`);
+          console.log(`\n[${product}]`);
+          console.log('False');
+        }
+
+      } catch (error) {
+        console.error(`❌ Error classifying product: ${error.message}`);
+        console.log(`\n[${product}]`);
+        console.log('False');
+      }
+
+      if (i < selectedProducts.length - 1) {
+        console.log(`\n${'='.repeat(100)}\n`);
+      }
+    }
+
+    // Summary statistics
+    console.log(`\n${'='.repeat(100)}`);
+    console.log('\n✨ Classification complete!\n');
+    console.log('Summary Statistics:');
+    console.log(`- Products tested: ${selectedProducts.length}`);
+    console.log(`- Successful: ${successCount}`);
+    console.log(`- Failed: ${selectedProducts.length - successCount}`);
+    if (successCount > 0) {
+      console.log(`- Average time: ${Math.round(totalTime / successCount)}ms`);
+      console.log(`- Average API calls: ${(totalApiCalls / successCount).toFixed(1)}`);
+      console.log(`- Estimated cost: ~$${(totalApiCalls * 0.0001).toFixed(4)}`);
+    }
+
   } catch (error) {
-    console.error('❌ Failed to initialize TaxonomyNavigator:', error.message);
+    console.error('❌ Fatal error:', error.message);
+    process.exit(2);
   }
 }
 
-// Run the example
-classifyTestProducts().catch(console.error); 
+// Run if called directly
+if (require.main === module) {
+  main();
+}
+
+module.exports = { main }; 

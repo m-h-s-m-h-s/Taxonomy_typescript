@@ -315,68 +315,124 @@ export class TaxonomyNavigator {
    */
   async classifyProduct(productInfo: string): Promise<ClassificationResult> {
     const startTime = Date.now();
-    this.apiCallCount = 0;
-
+    
     try {
-      // Generate AI summary for stages 1-3
+      this.log(`\n${'='.repeat(60)}`);
+      this.log(`Starting classification for: ${productInfo.substring(0, 100)}...`);
+      this.log(`${'='.repeat(60)}`);
+      
+      // Reset API call counter
+      this.apiCallCount = 0;
+      
+      // Initialize stage details object
+      const stageDetails: ClassificationResult['stageDetails'] = {
+        aiSummary: '',
+        stage1L1Categories: [],
+        stage2aLeaves: [],
+        stage2bLeaves: [],
+        stage2bSkipped: false,
+        totalCandidates: 0,
+        stage3Skipped: false
+      };
+      
+      // Stage 0: Generate AI summary
+      this.log('\n📝 Stage 0: Generating product summary...');
       const summary = await this.generateProductSummary(productInfo);
-      this.log(`Generated summary: ${summary.substring(0, 100)}...`);
-
+      stageDetails.aiSummary = summary;
+      this.log(`Summary: ${summary}`);
+      
       // Stage 1: Select top 2 L1 categories
+      this.log('\n🎯 Stage 1: Selecting top L1 categories...');
       const selectedL1s = await this.stage1SelectL1Categories(summary);
-      this.log(`Stage 1 selected: ${selectedL1s.join(', ')}`);
-
+      stageDetails.stage1L1Categories = selectedL1s;
+      this.log(`Selected L1 categories: ${selectedL1s.join(', ')}`);
+      
       if (selectedL1s.length === 0) {
         return this.createErrorResult('No L1 categories selected', startTime);
       }
-
-      // Stage 2A: Select leaves from first L1
-      const leaves2A = await this.stage2SelectLeaves(summary, selectedL1s, [], 'Stage 2A');
-      this.log(`Stage 2A found ${leaves2A.length} leaves`);
-
-      // Stage 2B: Select leaves from second L1 (if applicable)
-      let leaves2B: string[] = [];
-      if (selectedL1s.length >= 2) {
-        leaves2B = await this.stage2SelectLeaves(summary, selectedL1s.slice(1), leaves2A, 'Stage 2B');
-        this.log(`Stage 2B found ${leaves2B.length} leaves`);
+      
+      // Stage 2A: Get leaves from first L1
+      this.log('\n🔍 Stage 2A: Finding leaves from first L1 category...');
+      const stage2aLeaves = await this.stage2SelectLeaves(
+        summary, 
+        selectedL1s, 
+        [],
+        'Stage 2A'
+      );
+      stageDetails.stage2aLeaves = stage2aLeaves;
+      this.log(`Found ${stage2aLeaves.length} leaves from ${selectedL1s[0]}`);
+      
+      // Stage 2B: Get leaves from second L1 (if applicable)
+      let stage2bLeaves: string[] = [];
+      if (selectedL1s.length > 1) {
+        this.log('\n🔍 Stage 2B: Finding leaves from second L1 category...');
+        stage2bLeaves = await this.stage2SelectLeaves(
+          summary,
+          selectedL1s,
+          stage2aLeaves,
+          'Stage 2B'
+        );
+        stageDetails.stage2bLeaves = stage2bLeaves;
+        this.log(`Found ${stage2bLeaves.length} leaves from ${selectedL1s[1]}`);
+      } else {
+        stageDetails.stage2bSkipped = true;
+        this.log('\n⏩ Stage 2B: Skipped (only one L1 category selected)');
       }
-
+      
       // Combine all leaves
-      const allLeaves = [...leaves2A, ...leaves2B];
+      const allLeaves = [...stage2aLeaves, ...stage2bLeaves];
+      stageDetails.totalCandidates = allLeaves.length;
+      this.log(`\n📊 Total candidate leaves: ${allLeaves.length}`);
       
       if (allLeaves.length === 0) {
         return this.createErrorResult('No leaf categories found', startTime);
       }
-
-      // Stage 3: Final selection (skip if only 1 leaf)
-      let bestLeaf: string;
-      let bestIndex = 0;
       
-      if (allLeaves.length === 1) {
-        bestLeaf = allLeaves[0];
-        this.log('Stage 3 skipped - only one leaf found');
-      } else {
-        bestIndex = await this.stage3FinalSelection(summary, allLeaves);
-        bestLeaf = allLeaves[bestIndex];
-        this.log(`Stage 3 selected: ${bestLeaf}`);
-      }
-
-      // Convert to paths and return result
+      // Convert leaves to paths
       const paths = this.convertLeavesToPaths(allLeaves);
+      let bestMatchIndex = 0;
+      
+      // Stage 3: Final selection (if needed)
+      if (allLeaves.length > 1) {
+        this.log('\n🏁 Stage 3: Making final selection...');
+        bestMatchIndex = await this.stage3FinalSelection(summary, allLeaves);
+        
+        if (bestMatchIndex < 0) {
+          return this.createErrorResult('Stage 3 selection failed', startTime);
+        }
+        
+        this.log(`Selected: ${allLeaves[bestMatchIndex]}`);
+      } else {
+        stageDetails.stage3Skipped = true;
+        this.log('\n⏩ Stage 3: Skipped (only one candidate)');
+        this.log(`Using single result: ${allLeaves[0]}`);
+      }
+      
+      // Build result
+      const bestPath = paths[bestMatchIndex];
       const processingTime = Date.now() - startTime;
-
+      
+      this.log(`\n✅ Classification complete!`);
+      this.log(`Best match: ${bestPath.join(' > ')}`);
+      this.log(`Processing time: ${processingTime}ms`);
+      this.log(`API calls: ${this.apiCallCount}`);
+      this.log(`${'='.repeat(60)}\n`);
+      
       return {
         success: true,
         paths,
-        bestMatchIndex: bestIndex,
-        bestMatch: paths[bestIndex].join(' > '),
-        leafCategory: bestLeaf,
+        bestMatchIndex,
+        bestMatch: bestPath.join(' > '),
+        leafCategory: bestPath[bestPath.length - 1],
         processingTime,
-        apiCalls: this.apiCallCount
+        apiCalls: this.apiCallCount,
+        stageDetails
       };
-
+      
     } catch (error) {
-      return this.createErrorResult(error instanceof Error ? error.message : 'Unknown error', startTime);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.log(`\n❌ Error: ${errorMessage}`);
+      return this.createErrorResult(errorMessage, startTime);
     }
   }
 

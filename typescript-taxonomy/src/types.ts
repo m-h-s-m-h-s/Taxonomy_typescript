@@ -184,91 +184,56 @@ export interface TaxonomyPath {
 }
 
 /**
- * Result returned by the classifyProduct method.
- * 
- * Contains both the classification results and metadata
- * about the process for debugging and optimization.
- * 
- * RESULT INTERPRETATION:
- * - success=true with valid classification
- * - success=false with error details
- * - Multiple paths show alternatives considered
- * - bestMatchIndex points to the selected option
+ * Result from product classification
  */
 export interface ClassificationResult {
-  /**
-   * Whether classification completed successfully.
-   * 
-   * false indicates an error occurred at some stage.
-   * Check 'error' field for details.
-   */
+  /** Whether classification succeeded */
   success: boolean;
   
-  /**
-   * All candidate paths from Stage 2.
-   * 
-   * Shows all categories considered in final selection.
-   * Useful for debugging and alternative suggestions.
-   * 
-   * On error, contains [['False']] for compatibility.
-   */
+  /** All considered taxonomy paths */
   paths: string[][];
   
-  /**
-   * Index of the best match in the paths array.
-   * 
-   * 0-based index. Use paths[bestMatchIndex] to get
-   * the selected category path.
-   */
+  /** Index of the best matching path */
   bestMatchIndex: number;
   
-  /**
-   * The selected category as a formatted string.
-   * Example: "Electronics > Video > Televisions"
-   * 
-   * This is paths[bestMatchIndex].join(' > ') for convenience.
-   * On error, this is 'False'.
-   */
+  /** Full taxonomy path of best match (e.g., "Electronics > Computers > Laptops") */
   bestMatch: string;
   
-  /**
-   * The leaf category name only.
-   * Example: "Televisions"
-   * 
-   * This is the final element of the selected path.
-   * Useful for simpler integrations.
-   */
+  /** Leaf category name only (e.g., "Laptops") */
   leafCategory: string;
   
-  /**
-   * Total processing time in milliseconds.
-   * 
-   * Includes all API calls and processing.
-   * Typical range: 2000-5000ms.
-   */
+  /** Time taken in milliseconds */
   processingTime: number;
   
-  /**
-   * Number of API calls made during classification.
-   * 
-   * Useful for cost estimation and optimization.
-   * Typical range: 3-20 calls.
-   * 
-   * Breakdown:
-   * - Summary: 1 call
-   * - Stage 1: 1 call
-   * - Stage 2: 1-15 calls (depends on batches)
-   * - Stage 3: 0-1 call (skipped if 1 result)
-   */
+  /** Number of OpenAI API calls made */
   apiCalls: number;
   
-  /**
-   * Error message if success is false.
-   * 
-   * Contains specific error details for debugging.
-   * Only present when success=false.
-   */
+  /** Error message if classification failed */
   error?: string;
+  
+  /** Stage-by-stage details for verbose output */
+  stageDetails?: {
+    /** AI-generated product summary */
+    aiSummary: string;
+    
+    /** Stage 1: Selected L1 categories */
+    stage1L1Categories: string[];
+    
+    /** Stage 2A: Leaves from first L1 */
+    stage2aLeaves: string[];
+    
+    /** Stage 2B: Leaves from second L1 (if applicable) */
+    stage2bLeaves: string[];
+    
+    /** Whether stage 2B was skipped */
+    stage2bSkipped: boolean;
+    
+    /** Total candidate leaves for stage 3 */
+    totalCandidates: number;
+    
+    /** Whether stage 3 was skipped (only 1 candidate) */
+    stage3Skipped: boolean;
+  };
 }
 
 /**

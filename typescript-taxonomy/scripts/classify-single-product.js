@@ -26,9 +26,9 @@
  *   - Taxonomy file must be present in data/taxonomy.en-US.txt
  */
 
-const { TaxonomyNavigator } = require('../dist/TaxonomyNavigator');
-const { getApiKey } = require('../dist/config');
 const path = require('path');
+const { TaxonomyNavigator } = require('../dist/src/TaxonomyNavigator');
+const { getApiKey } = require('../dist/src/config');
 
 async function main() {
   // Get product from command line
